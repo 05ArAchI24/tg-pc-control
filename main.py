@@ -4,7 +4,7 @@ from telegram import Update, ReplyKeyboardMarkup
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 
 # --- НАСТРОЙКИ ---
-TOKEN = "8830337787:AAHrF0SBFVdgcXRPi1DdY1RgpKkMP8bwLjg"
+TOKEN = ""
 MY_USER_ID = 8369380737  # ВПИШИ СЮДА СВОЙ TELEGRAM ID
 
 # Клавиатура с быстрыми командами
