@@ -3,11 +3,9 @@ import os
 from telegram import Update, ReplyKeyboardMarkup
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 
-# --- НАСТРОЙКИ ---
-TOKEN = ""
-MY_USER_ID = 8369380737  # ВПИШИ СЮДА СВОЙ TELEGRAM ID
+TOKEN = "ТВОЙ_ТОКЕН_ОТ_BOTFATHER"
+MY_USER_ID = 123456789 # write here ur user-id | впиши сюда свой id
 
-# Клавиатура с быстрыми командами
 REPLY_KEYBOARD = [
     ["💻 Info", "📸 Screenshot"],
     ["📊 Top CPU", "🔋 Battery"],
@@ -15,15 +13,11 @@ REPLY_KEYBOARD = [
 ]
 MARKUP = ReplyKeyboardMarkup(REPLY_KEYBOARD, resize_keyboard=True)
 
-# --- БАЗОВЫЕ ФУНКЦИИ ---
-
 async def check_access(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
-    """Проверка прав доступа с алертом о чужаках."""
     user = update.effective_user
     if user.id == MY_USER_ID:
         return True
     
-    # Если пишет чужой — отправляем владельцу (тебе) предупреждение
     alert_text = (
         f"⚠️ *ПОПЫТКА ВЗЛОМА/ДОСТУПА*\n"
         f"Пользователь: @{user.username} (ID: {user.id})\n"
@@ -32,11 +26,10 @@ async def check_access(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bo
     try:
         await context.bot.send_message(chat_id=MY_USER_ID, text=alert_text, parse_mode="Markdown")
     except Exception:
-        pass # Если не удалось отправить, просто игнорируем
+        pass
     return False
 
 def run_shell(command: str) -> str:
-    """Выполнение bash-команды в фоне и возврат результата."""
     try:
         result = subprocess.run(
             command, 
@@ -52,14 +45,11 @@ def run_shell(command: str) -> str:
     except Exception as e:
         return f"❌ Ошибка: {e}"
 
-# --- КОМАНДЫ ---
-
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not await check_access(update, context): return
     await update.message.reply_text("👋 Бот-терминал активирован! Жми /help для списка команд.", reply_markup=MARKUP)
 
 async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Выводит список всех команд."""
     if not await check_access(update, context): return
     
     help_text = """
@@ -79,7 +69,6 @@ async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(help_text, parse_mode="Markdown")
 
 async def get_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Скачивает файл с компьютера."""
     if not await check_access(update, context): return
     
     if not context.args:
@@ -94,7 +83,6 @@ async def get_file(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(f"❌ Файл не найден или это директория: `{filepath}`", parse_mode="Markdown")
 
 async def say_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Озвучивает текст на ПК."""
     if not await check_access(update, context): return
     
     if not context.args:
@@ -102,12 +90,10 @@ async def say_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
         
     text = " ".join(context.args)
-    # Используем espeak-ng для озвучки (должен быть установлен)
     subprocess.Popen(["espeak-ng", "-v", "ru", text])
     await update.message.reply_text("🔊 Текст отправлен на колонки.")
 
 async def set_volume(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Управляет громкостью через PipeWire (wpctl)."""
     if not await check_access(update, context): return
     
     if not context.args or not context.args[0].isdigit():
@@ -115,7 +101,6 @@ async def set_volume(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
         
     vol = context.args[0]
-    # wpctl принимает значения в процентах
     run_shell(f"wpctl set-volume @DEFAULT_AUDIO_SINK@ {vol}%")
     await update.message.reply_text(f"🔉 Громкость установлена на {vol}%")
 
@@ -151,8 +136,6 @@ async def lock_pc(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not await check_access(update, context): return
     run_shell("loginctl lock-session")
     await update.message.reply_text("🔒 Компьютер заблокирован.")
-
-# --- ОБРАБОТЧИК КНОПОК И ТЕКСТА ---
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not await check_access(update, context): return
@@ -191,7 +174,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 def main():
     app = Application.builder().token(TOKEN).build()
 
-    # Команды
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("help", help_cmd))
     app.add_handler(CommandHandler("exec", exec_in_kitty))
@@ -202,7 +184,6 @@ def main():
     app.add_handler(CommandHandler("url", open_url))
     app.add_handler(CommandHandler("lock", lock_pc))
     
-    # Текст и кнопки
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
     print("✅ Бот запущен! Ожидание команд...")
